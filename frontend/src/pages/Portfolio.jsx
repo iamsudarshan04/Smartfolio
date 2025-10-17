@@ -9,6 +9,81 @@ function Portfolio() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Popular stock tickers - Indian and US markets
+  const POPULAR_TICKERS = [
+    // Indian Stocks (NSE)
+    { ticker: "TCS.NS", name: "Tata Consultancy Services" },
+    { ticker: "INFY.NS", name: "Infosys" },
+    { ticker: "RELIANCE.NS", name: "Reliance Industries" },
+    { ticker: "HDFCBANK.NS", name: "HDFC Bank" },
+    { ticker: "ICICIBANK.NS", name: "ICICI Bank" },
+    { ticker: "SBIN.NS", name: "State Bank of India" },
+    { ticker: "WIPRO.NS", name: "Wipro" },
+    { ticker: "BHARTIARTL.NS", name: "Bharti Airtel" },
+    { ticker: "ITC.NS", name: "ITC Limited" },
+    { ticker: "KOTAKBANK.NS", name: "Kotak Mahindra Bank" },
+    { ticker: "LT.NS", name: "Larsen & Toubro" },
+    { ticker: "AXISBANK.NS", name: "Axis Bank" },
+    { ticker: "HINDUNILVR.NS", name: "Hindustan Unilever" },
+    { ticker: "MARUTI.NS", name: "Maruti Suzuki" },
+    { ticker: "BAJFINANCE.NS", name: "Bajaj Finance" },
+    { ticker: "ASIANPAINT.NS", name: "Asian Paints" },
+    { ticker: "TITAN.NS", name: "Titan Company" },
+    { ticker: "SUNPHARMA.NS", name: "Sun Pharmaceutical" },
+    { ticker: "TATAMOTORS.NS", name: "Tata Motors" },
+    { ticker: "TATASTEEL.NS", name: "Tata Steel" },
+    { ticker: "ADANIPORTS.NS", name: "Adani Ports" },
+    { ticker: "POWERGRID.NS", name: "Power Grid Corporation" },
+    { ticker: "NTPC.NS", name: "NTPC Limited" },
+    { ticker: "ONGC.NS", name: "Oil and Natural Gas Corporation" },
+    { ticker: "TECHM.NS", name: "Tech Mahindra" },
+    { ticker: "HCLTECH.NS", name: "HCL Technologies" },
+    { ticker: "ULTRACEMCO.NS", name: "UltraTech Cement" },
+    { ticker: "DRREDDY.NS", name: "Dr. Reddy's Laboratories" },
+    { ticker: "CIPLA.NS", name: "Cipla" },
+    { ticker: "DIVISLAB.NS", name: "Divi's Laboratories" },
+    
+    // US Stocks
+    { ticker: "AAPL", name: "Apple Inc." },
+    { ticker: "MSFT", name: "Microsoft Corporation" },
+    { ticker: "GOOGL", name: "Alphabet Inc." },
+    { ticker: "AMZN", name: "Amazon.com Inc." },
+    { ticker: "TSLA", name: "Tesla Inc." },
+    { ticker: "META", name: "Meta Platforms Inc." },
+    { ticker: "NVDA", name: "NVIDIA Corporation" },
+    { ticker: "JPM", name: "JPMorgan Chase & Co." },
+    { ticker: "V", name: "Visa Inc." },
+    { ticker: "JNJ", name: "Johnson & Johnson" },
+    { ticker: "WMT", name: "Walmart Inc." },
+    { ticker: "PG", name: "Procter & Gamble" },
+    { ticker: "MA", name: "Mastercard Inc." },
+    { ticker: "DIS", name: "The Walt Disney Company" },
+    { ticker: "NFLX", name: "Netflix Inc." },
+    { ticker: "PYPL", name: "PayPal Holdings Inc." },
+    { ticker: "INTC", name: "Intel Corporation" },
+    { ticker: "AMD", name: "Advanced Micro Devices" },
+    { ticker: "CSCO", name: "Cisco Systems Inc." },
+    { ticker: "PFE", name: "Pfizer Inc." },
+    { ticker: "KO", name: "The Coca-Cola Company" },
+    { ticker: "PEP", name: "PepsiCo Inc." },
+    { ticker: "NKE", name: "Nike Inc." },
+    { ticker: "ADBE", name: "Adobe Inc." },
+    { ticker: "CRM", name: "Salesforce Inc." },
+    { ticker: "ORCL", name: "Oracle Corporation" },
+    { ticker: "IBM", name: "IBM" },
+    { ticker: "BA", name: "Boeing Company" },
+    { ticker: "GE", name: "General Electric" },
+    { ticker: "F", name: "Ford Motor Company" },
+  ];
+
+  // Filter suggestions based on input
+  const filteredSuggestions = POPULAR_TICKERS.filter(
+    (stock) =>
+      stock.ticker.toLowerCase().includes(newTicker.toLowerCase()) ||
+      stock.name.toLowerCase().includes(newTicker.toLowerCase())
+  ).slice(0, 10);
 
   // Colors for pie chart
   const COLORS = [
@@ -17,20 +92,41 @@ function Portfolio() {
   ];
 
   // Add a stock to the list
-  const addStock = () => {
-    if (!newTicker) return;
+  const addStock = (ticker = null) => {
+    const tickerToAdd = ticker || newTicker;
+    if (!tickerToAdd) return;
 
     if (stocks.length >= 10) {
       setError("You can only add up to 10 stocks.");
       return;
     }
 
+    // Check if stock already exists
+    if (stocks.some(s => s.ticker.toUpperCase() === tickerToAdd.toUpperCase())) {
+      setError("This stock is already in your portfolio.");
+      return;
+    }
+
     setStocks([
       ...stocks,
-      { ticker: newTicker.toUpperCase() },
+      { ticker: tickerToAdd.toUpperCase() },
     ]);
     setNewTicker("");
+    setShowSuggestions(false);
     setError("");
+  };
+
+  // Handle input change
+  const handleInputChange = (e) => {
+    setNewTicker(e.target.value);
+    setShowSuggestions(e.target.value.length > 0);
+  };
+
+  // Handle key press for Enter key
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      addStock();
+    }
   };
 
   // Remove stock from list
@@ -99,21 +195,60 @@ function Portfolio() {
         </p>
       </div>
 
-      {/* Stock Input Form */}
-      <div className="flex gap-2 mb-6">
-        <input
-          type="text"
-          placeholder="Stock Ticker (e.g. TCS.NS, INFY.NS)"
-          value={newTicker}
-          onChange={(e) => setNewTicker(e.target.value)}
-          className="flex-1 border rounded-lg px-3 py-2"
-        />
-        <button
-          onClick={addStock}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-        >
-          ➕ Add Stock
-        </button>
+      {/* Stock Input Form with Autocomplete */}
+      <div className="mb-6">
+        <div className="flex gap-2 relative">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="Search stock ticker or company name..."
+              value={newTicker}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
+              onFocus={() => setShowSuggestions(newTicker.length > 0)}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+            
+            {/* Autocomplete Suggestions Dropdown */}
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {filteredSuggestions.map((stock, index) => (
+                  <div
+                    key={index}
+                    onClick={() => addStock(stock.ticker)}
+                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
+                  >
+                    <div className="font-semibold text-gray-800">{stock.ticker}</div>
+                    <div className="text-sm text-gray-600">{stock.name}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => addStock()}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+          >
+            ➕ Add Stock
+          </button>
+        </div>
+        
+        {/* Popular Stocks Quick Add */}
+        <div className="mt-3">
+          <p className="text-sm text-gray-600 mb-2">💡 Popular Stocks:</p>
+          <div className="flex flex-wrap gap-2">
+            {POPULAR_TICKERS.slice(0, 8).map((stock) => (
+              <button
+                key={stock.ticker}
+                onClick={() => addStock(stock.ticker)}
+                className="text-xs bg-gray-100 hover:bg-blue-100 text-gray-700 px-3 py-1 rounded-full border hover:border-blue-400 transition"
+                disabled={stocks.some(s => s.ticker === stock.ticker)}
+              >
+                {stock.ticker}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Stocks List */}
@@ -224,6 +359,27 @@ function Portfolio() {
             </div>
           </div>
 
+          {/* Model Info Badge */}
+          {result.model_used && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-medium text-purple-700">
+                    🤖 Model: {result.model_used === 'enhanced' ? '✨ Enhanced ML Model (171 features)' : '📊 Basic Random Forest'}
+                  </span>
+                  {result.return_method && (
+                    <span className="text-xs text-purple-600 ml-2">
+                      | Returns: {result.return_method}
+                    </span>
+                  )}
+                </div>
+                {result.model_used === 'enhanced' && (
+                  <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded-full">ADVANCED</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Portfolio Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-blue-50 p-4 rounded-lg border">
@@ -248,13 +404,23 @@ function Portfolio() {
                 <div key={ticker} className="bg-white p-4 rounded-lg border">
                   <h5 className="font-bold text-lg mb-2">{ticker}</h5>
                   <div className="space-y-1 text-sm">
+                    {result.stock_expected_returns && (
+                      <div className="flex justify-between border-b pb-1 mb-1">
+                        <span className="font-semibold text-blue-700">Expected Return:</span>
+                        <span className="font-bold text-blue-800">{(result.stock_expected_returns[ticker] * 100).toFixed(2)}%</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
-                      <span>Annual Return:</span>
+                      <span>Historical Return:</span>
                       <span className="font-medium">{(stats.annual_return * 100).toFixed(2)}%</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Volatility:</span>
                       <span className="font-medium">{(stats.annual_volatility * 100).toFixed(2)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Sharpe Ratio:</span>
+                      <span className="font-medium">{stats.sharpe_ratio.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Max Drawdown:</span>
