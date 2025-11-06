@@ -46,7 +46,9 @@ for filename in files_to_check:
 
 print("\n" + "=" * 60)
 print("\n💡 Recommendations:")
-
+if not os.path.exists('portfolio_allocator_rf.pkl'):
+    print("   ❌ Basic model missing - app will not work!")
+    print("      This file should exist in your backend folder.")
 
     
 if not os.path.exists('enhanced_portfolio_model.pkl'):
